@@ -1,0 +1,224 @@
+---
+title: "Paper Airplanes Factorial Design"
+author: "Yue Zhu"
+date: "2025-03-17"
+output: 
+  pdf_document:
+    latex_engine: xelatex
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+The study of aerodynamics plays a crucial role in understanding how objects move through the air, with applications ranging from aviation to sports engineering. One common experiment used to explore aerodynamic principles is the construction and testing of paper airplanes. Paper airplanes provide a simple yet effective way to study how different factors influence flight distance. In this study, we aim to analyze the effects of added weight, in the form of paper clips, on the flight performance of paper airplanes using a factorial experimental design.
+
+Aerodynamics governs the flight of both full-scale aircraft and paper airplanes. NASA’s research on paper airplane aerodynamics explains how forces such as lift, drag, and gravity interact to determine flight stability and distance (NASA, n.d.). Additionally, studies by Scientific American highlight how minor adjustments in weight distribution and wing shape can significantly alter flight patterns (Scientific American, n.d.). These principles provide the foundation for our investigation into how weight placement impacts flight performance.
+
+Building on previous research and experimental designs, this study moves beyond single-variable testing by incorporating multiple factors simultaneously. Specifically, we examine the impact of placing paper clips at different locations on the airplane: the nose, middle, and rear. Each location can either have a paper clip or not, resulting in a full factorial design with eight possible combinations. Unlike previous experiments where only one or no paper clips were used, this approach allows for an in-depth analysis of interaction effects between different weight placements. Experimental studies have demonstrated that the positioning of additional mass can impact an aircraft's center of gravity, leading to varied aerodynamic outcomes (ResearchGate, 2008).
+
+The primary research question guiding this experiment is: How does the placement of paper clips affect the flight distance of a paper airplane? We hypothesize that adding weight to the nose will increase flight stability but may reduce distance due to increased downward force, while adding weight to the rear may cause instability and erratic flight patterns. The factorial design enables us to quantify both the main effects of each weight placement and any interaction effects between different placements.
+
+By conducting multiple replicates, we aim to ensure statistical reliability in our findings. The results of this study will provide insights into the relationship between weight distribution and flight distance, contributing to a broader understanding of aerodynamics in small-scale flight models.
+
+## Method
+
+### Experimental Design
+This study employs a full factorial design to investigate the effects of paper clip placement on the flight distance of a paper airplane. The three independent variables (factors) are the presence or absence of a paper clip at the nose, middle, and rear of the airplane. Each factor has two levels (Yes/No), resulting in $2^3 = 8$ treatment combinations. To improve the reliability of results, 10 replicates were performed for each condition.
+
+### Photographic Documentation
+To ensure transparency in data collection, photographs of the paper airplanes and their placement of paper clips in each condition were shown below.
+
+The images represent different paperclip placements on the paper airplane in a 4×2 grid, arranged from top left to bottom right in the following order: (1) No clip, (2) Nose only, (3) Middle only, (4) Rear only, (5) Nose and Middle, (6) Nose and Rear, (7) Middle and Rear, and (8) All positions.
+```{r, echo=FALSE, out.width="95%", out.height="95%"}
+knitr::include_graphics("total.jpeg")
+```
+
+### Data Collection Procedure
+The experiment followed a standardized procedure to ensure consistency and reliability. Paper airplanes were constructed using the same type of paper to minimize variations. Paper clips were then attached to the nose, middle, or rear according to the assigned experimental conditions. Each airplane was thrown in a controlled environment to reduce external influences such as wind or thrower variability. The flight distance was measured in centimeters for each trial, and multiple replicates were conducted for each condition to enhance statistical robustness.
+
+### Statistical Methods, Assumptions and Validity
+We used scatter plots to display the distribution of flight distances for each combination of Nose, Middle, and Rear clip placements, providing a clear view of data spread and potential outliers. Additionally, boxplots were used to summarize trends, and an interaction plot examined how factors influenced flight distance collectively. We applied a linear model (lm) and ANOVA (aov) to test the effects of individual factors and their interactions. Assumption checks included Q-Q plots and the Shapiro-Wilk test for normality and Residuals vs. Fitted plots for homoscedasticity. To further validate our findings, we conducted Tukey’s HSD test to identify significant pairwise differences among factor levels and performed a power analysis to assess the robustness of our statistical tests. These methods ensured a comprehensive statistical analysis of flight performance.
+
+### Technical Considerations
+Several challenges were encountered during data collection. Thrower consistency was a potential issue, as slight variations in throwing force or angle could influence results. To mitigate this, the same individual conducted all throws, and multiple trials were performed for each condition. Additionally, randomization was implemented in the order of trials to prevent bias.
+
+## Results
+### Descriptive statistics
+```{r}
+library(readxl)
+data <- read_excel('Final Project_Raw Data.xlsx')
+print(data)
+library(ggplot2)
+library(dplyr)
+data$Combination <- paste(data$Nose, data$Middle, data$Rear, sep=" | ")
+library(knitr)
+descriptive_stats <- data %>%
+  group_by(Combination) %>%
+  summarize(
+    Mean = mean(Distance),
+    SD = sd(Distance),
+    Min = min(Distance),
+    Max = max(Distance)
+  )
+kable(descriptive_stats, caption = "Descriptive Statistics by Treatment")
+```
+The above descriptive statistics were computed for each Nose | Middle | Rear combination, including the mean, standard deviation (SD), minimum, and maximum flight distances. The results show variations in flight performance across different conditions. For instance, the No | No | Yes combination had the highest mean flight distance (364.8 cm), while Yes | Yes | Yes had the lowest (173.6 cm). These summary statistics provide an overview of the central tendency and dispersion of flight distances across all treatment groups.
+
+### Boxplot
+```{r}
+data$Nose <- as.factor(data$Nose)
+data$Middle <- as.factor(data$Middle)
+data$Rear <- factor(data$Rear)
+
+ggplot(data, aes(x = Combination, y = Distance, fill = Combination)) +
+  geom_boxplot() +
+  ggtitle("Effect of Paper Clip Placement on Flight Distance") +
+  xlab("Paper Clip Placement (Nose | Middle | Rear)") +
+  ylab("Flight Distance (cm)") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+The boxplot above was used to visualize the distribution of flight distances across all Nose | Middle | Rear combinations. Each box represents the spread of distances, showing the median, interquartile range, and potential outliers. The plot highlights differences in flight performance across conditions, with some combinations achieving significantly greater distances than others. This visualization provides insight into the effects of paper clip placement on flight distance.
+
+### Effect of Paper Clip Placement on Flight Distance Based on Three Factor
+```{r}
+ggplot(data, aes(x = Nose, y = Distance, color = Middle)) +
+  geom_jitter(width = 0.2, height = 0) +
+  facet_grid(cols = vars(Rear),
+             labeller = as_labeller(c("No" = "Rear Clip (No)", "Yes" = "Rear Clip (Yes)"))) +
+  ggtitle("Effect of Paper Clip Placement on Flight Distance") +
+  scale_x_discrete(name = "Nose Clip (No/Yes)") +
+  scale_color_discrete(name = "Middle Clip (No/Yes)") +
+  theme_minimal()
+```
+The above scatter plot is used to visualize the distribution of flight distances based on Nose, Middle, and Rear clip placements. The x-axis represents the presence or absence of a Nose clip, while the color differentiates whether a Middle clip is present. The data is further faceted by Rear clip placement, allowing for a clear comparison across all three factors. We can see that different combinations of paperclip placements have very different flight distance distributions.
+
+### Interation Plot
+```{r}
+mean_data <- data %>%
+  group_by(Nose, Middle, Rear) %>%
+  summarize(mean_distance = mean(Distance), .groups = "drop")
+
+ggplot(mean_data, aes(x = Nose, y = mean_distance, group = Middle, color = Middle)) +
+  geom_point(size = 3) +
+  geom_line() +
+  facet_wrap(~ Rear, labeller = as_labeller(c("No" = "Rear Clip (No)", "Yes" = "Rear Clip (Yes)"))) +
+  ggtitle("Interaction Plot: Effect of Paper Clip Placement on Flight Distance") +
+  xlab("Nose Clip (No/Yes)") +
+  ylab("Mean Flight Distance (cm)") +
+  labs(color = "Middle Clip (No/Yes)") +
+  theme_minimal()
+```
+This interaction plot illustrates the combined effects of nose, middle, and rear paper clip placements on flight distance. The x-axis represents the presence or absence of a nose clip, while the color differentiates the middle clip condition. The plot is faceted by rear clip placement. The trends suggest potential interactions between the three factors, particularly how the presence of a nose and middle clip influences flight distance differently depending on the rear clip condition. The observed non-parallel lines indicate potential interaction effects
+
+### Fit Linear Model
+```{r}
+data <- data %>%
+  mutate(
+    Nose = ifelse(Nose == "No", 0, 1),
+    Middle = ifelse(Middle == "No", 0, 1),
+    Rear = ifelse(Rear == "No", 0, 1)
+  )
+
+data$Nose <- as.factor(data$Nose)
+data$Middle <- as.factor(data$Middle)
+data$Rear <- as.factor(data$Rear)
+
+lm_model <- lm(Distance ~ Nose * Middle * Rear, data = data)
+
+summary(lm_model)
+```
+The linear model evaluates the effects of paper clip placement on flight distance, treating Nose, Middle, and Rear placements as binary factors (0 = No, 1 = Yes) and including their interactions. The model explains 73.2\% of the variance ($R^2 = 0.7324$, $p < 2.2 \times 10^{-16}$), indicating a strong fit.
+
+Several significant effects emerge ($p < 0.05$): Nose placement ($-43.30$, $p = 0.0190$) decreases flight distance, suggesting it disrupts aerodynamics, while Middle ($86.90$, $p = 7.91 \times 10^{-6}$) and Rear placement ($99.20$, $p = 5.58 \times 10^{-7}$) significantly increase flight distance, likely due to improved stability. However, interactions reveal complex dynamics: Nose $\times$ Rear ($-110.10$, $p = 5.03 \times 10^{-5}$) and Middle $\times$ Rear ($-171.30$, $p = 3.76 \times 10^{-9}$) combinations significantly reduce flight distance, indicating that certain placements counteract aerodynamic advantages.
+
+Overall, the model suggests that single clip placements can enhance performance, but certain combinations negatively impact flight distance, highlighting the importance of strategic weight distribution.
+
+### Check Assumption
+```{r}
+par(mfrow = c(2, 2))
+plot(lm_model)
+```
+To validate the assumptions of the linear model, diagnostic plots were examined. The residuals vs. fitted plot indicates no clear pattern, suggesting homoscedasticity. The Q-Q plot shows that residuals approximately follow a normal distribution, supporting the normality assumption. The scale-location plot suggests constant variance across fitted values. Overall, these diagnostics indicate that the model assumptions are reasonably met, though minor deviations may exist.
+
+```{r}
+residuals_lm <- residuals(lm_model)
+shapiro_test_lm <- shapiro.test(residuals_lm)
+print(shapiro_test_lm)
+```
+The Shapiro-Wilk test on the linear model residuals further supports that the residuals are normally distributed by giving a non-significant p-value.
+
+### ANOVA Test 
+```{r}
+anova_model <- aov(Distance ~ Nose * Middle * Rear, data = data)
+anova_summary <- summary(anova_model)
+anova_summary
+```
+The ANOVA test examines the effects of nose, middle, and rear clip placements on flight distance, including their interactions. The results indicate that the placement of the nose clip has a significant effect on flight distance (p $<$ 2e-16). The interaction between middle and rear clips (p $<$ 7.41e-08) and the three-way interaction among nose, middle, and rear clips (p = 0.000813) are also statistically significant. However, middle and rear clip placements alone do not have a significant individual impact. These findings suggest that interactions between factors play a crucial role in determining flight performance.
+
+```{r}
+par(mfrow = c(2, 2))
+plot(anova_model)
+```
+The ANOVA model assumptions were assessed using residual diagnostic plots. The residuals vs. fitted plot indicates no clear pattern, suggesting that the assumption of homoscedasticity (constant variance) is reasonable. The Q-Q plot of residuals shows a mostly linear trend, indicating that the normality assumption is largely met, though some deviation is present in the tails. The scale-location plot further supports the assumption of homoscedasticity, as no strong pattern is evident. Overall, the model assumptions appear to be reasonably satisfied, supporting the validity of the ANOVA results.
+
+### Shapiro Test
+```{r}
+residuals_anova <- residuals(anova_model)
+shapiro_test <- shapiro.test(residuals_anova)
+print(shapiro_test)
+```
+The normality of residuals for the anova model is again validated by the non-significant p-value given by Shapiro-Wilk test.
+
+### Tukey's test 
+```{r}
+TukeyHSD(anova_model)
+```
+The Tukey's Honest Significant Difference (HSD) test was performed to identify which specific group differences in flight distance were statistically significant. The results show multiple pairwise comparisons between levels of Nose, Middle, and Rear clip placements. Comparisons with adjusted p-values less than 0.05 indicate significant differences. The Nose clip placement has a significant effect (p adj = 0), indicating a meaningful difference in flight distances between the presence and absence of a Nose clip. Several interactions, such as Nose:Middle, Nose:Rear, and Middle:Rear, also show highly significant differences in flight distance with p adj values close to zero. The three-way interaction Nose:Middle:Rear reveals additional significant differences, demonstrating complex interactions between clip placements.
+
+### Power Test
+```{r}
+source("power_factorial_23.R")
+
+power_factorial_23(
+  beta_mean = c(265.6, -43.3, 86.9, 99.2, -79.6, -110.1, -171.3, 126.2),
+  beta_se = c(12.76, 18.05, 18.05, 18.05, 25.53, 25.53, 25.53, 36.1),
+  replicates = 10,
+  iter = 1000,
+  alpha = 0.05
+)
+```
+A power analysis was conducted using a factorial power estimation function to determine the ability to detect significant effects. The power test used the estimated beta coefficients and standard errors from the linear model, with 10 replicates and 1000 iterations at an alpha level of 0.05.
+
+This analysis helps assess whether the sample size and effect sizes are sufficient to detect true differences. The power value (1) confirms that the study design is adequately powered.
+
+## Discussion
+This study investigated how the placement of paper clips at different positions (nose, middle, and rear) affected the flight distance of paper airplanes using a full factorial design. The statistical analyses revealed that weight placement significantly influenced flight performance, with both main effects and interaction effects playing a crucial role.
+
+The linear model results indicated that placing a paper clip on the nose significantly reduced flight distance, supporting the hypothesis that nose weight disrupts aerodynamics by increasing downward force. In contrast, clips placed on the middle and rear generally improved flight distance, likely due to enhanced stability. However, interaction effects between weight placements were substantial, with certain combinations negatively affecting flight performance. For example, the Nose × Rear and Middle × Rear interactions significantly reduced flight distance, suggesting that some weight distributions counteract potential aerodynamic advantages.
+
+The ANOVA test further confirmed the importance of interactions in determining flight distance. While the main effect of nose placement was highly significant (p < 2e-16), individual middle and rear placements alone were not significant. Instead, the Middle × Rear (p = 7.41e-08) and Nose × Middle × Rear (p = 0.000813) interactions showed strong statistical significance, emphasizing the complexity of weight distribution effects.
+
+To refine the interpretation of these results, Tukey’s HSD test was conducted to identify significant pairwise differences between factor levels. The results highlighted that specific combinations, particularly those involving nose placement, led to statistically significant changes in flight distance. Several interaction terms, such as Nose × Middle, Nose × Rear, and Middle × Rear, exhibited strong differences, reinforcing the role of weight placement in altering aerodynamics.
+
+Additionally, a power analysis was performed to assess the robustness of the statistical findings. With a power value of 1, the study design was confirmed to be well-powered, ensuring that the observed effects were not due to random variation but rather true underlying differences in flight performance.
+
+Despite these findings, the study has some limitations. First, variations in throwing technique, even when controlled, could introduce minor inconsistencies. Additionally, environmental factors such as air currents, though minimized, may have influenced flight outcomes. Future studies could use automated launch mechanisms to further standardize throws and reduce variability.
+
+In conclusion, the study demonstrates that paper clip placement significantly impacts the flight distance of paper airplanes, with interactions between placements playing a key role. These findings provide insights into small-scale aerodynamics and suggest that weight distribution strategies are critical for optimizing flight performance.
+
+## Reference
+1. Lab 5: Does putting a paperclip on various locations on a paper airplane impact how far it flies?”
+2. Lecture 6: ANOVA Assumptions and Model Checking
+3. Lecture 14: Two-Factor Experiments: 3 groups
+4. Daily Check 14: power_factorial_23.R
+5. NASA. (n.d.). Paper airplane aerodynamics. NASA Glenn Research Center. Retrieved from https://www.grc.nasa.gov/www/k-12/airplane/paperair.html
+6. Scientific American. (n.d.). The physics of paper airplanes. Retrieved from https://www.scientificamerican.com/article/bring-science-home-paper-airplanes/
+7. Crowell, B. (2008). Aerodynamics of paper airplanes: An experimental study. ResearchGate. Retrieved from https://www.researchgate.net/publication/228970282_Aerodynamics_of_Paper_Airplanes_An_Experimental_Study
+
+
+
+
+
